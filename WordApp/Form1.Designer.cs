@@ -1,5 +1,5 @@
 ﻿
-namespace WordApp
+namespace HearTS
 {
     partial class Form1
     {
@@ -124,9 +124,9 @@ namespace WordApp
             this.label2.ForeColor = System.Drawing.SystemColors.ControlLight;
             this.label2.Location = new System.Drawing.Point(103, 6);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(192, 15);
+            this.label2.Size = new System.Drawing.Size(186, 15);
             this.label2.TabIndex = 2;
-            this.label2.Text = "2023  ©  Takip ve kodlar için      >>";
+            this.label2.Text = "2023  ©  | Takip ve kodlar için  >>";
             // 
             // pictureBox2
             // 

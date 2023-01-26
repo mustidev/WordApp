@@ -11,7 +11,7 @@ using Microsoft.CognitiveServices.Speech;
 using System.Data.SqlClient;
 
 
-namespace WordApp
+namespace HearTS
 {
     public partial class Form3 : Form
     {

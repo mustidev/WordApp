@@ -7,12 +7,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using SpeechLib;
 using Microsoft.CognitiveServices.Speech;
 using System.Data.SqlClient;
 
 
-namespace WordApp
+namespace HearTS
 {
     public partial class Form2 : Form
     {

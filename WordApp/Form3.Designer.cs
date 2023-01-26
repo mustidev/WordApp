@@ -1,5 +1,5 @@
 ﻿
-namespace WordApp
+namespace HearTS
 {
     partial class Form3
     {
