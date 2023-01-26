@@ -7,21 +7,26 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using SpeechLib;
+using Microsoft.CognitiveServices.Speech;
+using System.Data.SqlClient;
+
 
 namespace WordApp
 {
     public partial class Form3 : Form
     {
         private Button[] buttons;
-        private string[] words;
         private Random rand;
-        private Button randomButton;        
+        private Button randomButton;
+        List<string> wordList = new List<string>();
+
         public Form3()
         {
             InitializeComponent();
+            this.MaximizeBox = false;
 
-            words = new string[] { "Okul", "Doktor", "Gözlük", "Kalem", "Yuvarlak", "Bardak", "Kartal", "Bilgisayar", "Trafik" };
+            wordDB(); //database den kelime listesini çekmek için
+
             buttons = new Button[] { button1, button2, button3, button4 };
             rand = new Random();
             SetRandomWords();
@@ -31,7 +36,7 @@ namespace WordApp
 
         private void SetRandomWords()
         {
-            var shuffledWords = words.OrderBy(x => rand.Next()).ToArray();
+            var shuffledWords = wordList.OrderBy(x => rand.Next()).ToArray();
             for (int i = 0; i < buttons.Length; i++)
             {
                 buttons[i].Text = shuffledWords[i];
@@ -41,15 +46,27 @@ namespace WordApp
 
         private void Form3_Load(object sender, EventArgs e)
         {
-            
+            ButtonDisable();
         }
-        public void seslendir()
+        private async void seslendir()
         {   
-              randomButton = buttons[rand.Next(buttons.Length)];
+            
+            randomButton = buttons[rand.Next(buttons.Length)];
 
+            // Azure Speech Services kullanmak için gerekli olan kimlik bilgileri
+            string subscriptionKey = "37acc756bb794815b919566626818017";
+            string serviceRegion = "eastus";
 
-            SpVoice dinle = new SpVoice();
-            dinle.Speak(randomButton.Text, SpeechVoiceSpeakFlags.SVSFDefault);
+            var config = SpeechConfig.FromSubscription(subscriptionKey, serviceRegion);
+            config.SpeechSynthesisLanguage = "tr-TR";
+            var synthesizer = new SpeechSynthesizer(config);            
+            var result = await synthesizer.SpeakTextAsync(randomButton.Text);
+
+            if (result.Reason == ResultReason.Canceled)
+            {
+                var cancellation = SpeechSynthesisCancellationDetails.FromResult(result);
+                Console.WriteLine($"CANCELED: Reason={cancellation.Reason}");
+            }
         }
 
  
@@ -63,7 +80,9 @@ namespace WordApp
         private void button5_Click(object sender, EventArgs e)
         {   
             seslendir();
-           
+
+            ButtonEnable();
+
         }
         
         private void button1_Click(object sender, EventArgs e)
@@ -72,12 +91,22 @@ namespace WordApp
             var clickedButton = (Button)sender;
             if (clickedButton.Text == randomButton.Text)
             {
-                
+
                 MessageBox.Show("Doğru!");
+                SetRandomWords();
+
+                ButtonDisable();
+
+                System.Threading.Thread.Sleep(1000);
+
+                seslendir();
+
+                ButtonEnable();
+
             }
             else
             {
-               
+
                 MessageBox.Show("Yanlış!");
             }
 
@@ -91,6 +120,14 @@ namespace WordApp
             {
 
                 MessageBox.Show("Doğru!");
+
+                ButtonDisable();
+
+                System.Threading.Thread.Sleep(2000);
+
+                seslendir();
+
+                ButtonEnable();
             }
             else
             {
@@ -105,7 +142,16 @@ namespace WordApp
             if (clickedButton.Text == randomButton.Text)
             {
 
-                MessageBox.Show("Doğru!");
+                 MessageBox.Show("Doğru!");
+
+                ButtonDisable();
+
+                System.Threading.Thread.Sleep(2000);
+
+                seslendir();
+
+                ButtonEnable();
+
             }
             else
             {
@@ -121,12 +167,62 @@ namespace WordApp
             {
 
                 MessageBox.Show("Doğru!");
+
+                ButtonDisable();
+
+                System.Threading.Thread.Sleep(2000);
+
+                seslendir();
+
+                ButtonEnable();
+    
             }
             else
             {
 
                 MessageBox.Show("Yanlış!");
             }
+        }
+
+        private void ButtonEnable()
+        {
+            button1.Enabled = true;
+            button2.Enabled = true;
+            button3.Enabled = true;
+            button4.Enabled = true;
+        }
+
+        private void ButtonDisable()
+        {
+            button1.Enabled = false;
+            button2.Enabled = false;
+            button3.Enabled = false;
+            button4.Enabled = false;
+        }
+
+        private void wordDB()
+        {
+
+            string connectionString = "Data Source=DESKTOP-1P312F6;Initial Catalog=word;Integrated Security=True";
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                using (SqlCommand command = new SqlCommand("SELECT * FROM wordTable", connection))
+                {
+                    using (SqlDataReader reader = command.ExecuteReader())
+                    {
+
+                        while (reader.Read())
+                        {
+                            wordList.Add(reader["words"].ToString());
+                        }
+
+                        // words dizisi SQL veritabanından çekilmiş kelimelerle doldurulmuş olacak
+                        connection.Close();
+                    }
+                }
+            }
+
         }
     }
 }

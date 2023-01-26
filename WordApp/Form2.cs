@@ -8,16 +8,22 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using SpeechLib;
-//using System.Speech.Synthesis;
+using Microsoft.CognitiveServices.Speech;
+using System.Data.SqlClient;
+
 
 namespace WordApp
 {
     public partial class Form2 : Form
-    {   
+    {
 
+        List<string> wordList = new List<string>();
         public Form2()
         {
             InitializeComponent();
+            this.MaximizeBox = false;
+
+
         }
 
         private void label1_Click(object sender, EventArgs e)
@@ -25,23 +31,25 @@ namespace WordApp
 
         }
 
-        public void words()
-        {
-            string[] kelimeler = { "Okul", "Doktor", "Gözlük", "Kalem", "Yuvarlak", "Bardak", "Kartal", "Bilgisayar","Trafik" };
-            
-            button1.Text = kelimeler[0];
-            button2.Text = kelimeler[1];
-            button3.Text = kelimeler[2];
-            button4.Text = kelimeler[3];
-            button5.Text = kelimeler[4];
-            button6.Text = kelimeler[5];
-            button7.Text = kelimeler[6];
-            button8.Text = kelimeler[7];
-            button9.Text = kelimeler[8];
-        }
+   
         private void Form2_Load(object sender, EventArgs e)
         {
-            words();
+
+            wordDB();
+           
+            Button[] buttons = { button1, button2, button3, button4, button5, button6, button7, button8, button9 };
+            foreach (Button button in buttons)
+            {
+                button.Click += new EventHandler(Button_Click);
+              
+              
+            }
+            Random rand = new Random();
+            List<string> shuffledWords = wordList.OrderBy(x => rand.Next()).ToList();
+            for (int i = 0; i < buttons.Length; i++)
+            {
+                buttons[i].Text = shuffledWords[i];
+            }
         }
 
         private void button10_Click(object sender, EventArgs e)
@@ -51,58 +59,63 @@ namespace WordApp
             this.Hide();
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private async void Button_Click(object sender, EventArgs e)
         {
-            SpVoice dinle = new SpVoice();
-            dinle.Speak(button1.Text, SpeechVoiceSpeakFlags.SVSFDefault);
+            // Your subscription key and service region
+            string subscriptionKey = "37acc756bb794815b919566626818017";
+            string serviceRegion = "eastus";
+
+            // Create a config with the subscription key and service region
+            var config = SpeechConfig.FromSubscription(subscriptionKey, serviceRegion);
+
+            // Set the language to Turkish
+            config.SpeechSynthesisLanguage = "tr-TR";
+
+            // Create a synthesizer
+            var synthesizer = new SpeechSynthesizer(config);
+
+            // Get the text from button
+            Button button = (Button)sender;
+            string text = button.Text;
+
+            // Speak the text
+            var result = await synthesizer.SpeakTextAsync(text);
+
+            // Check for errors
+
+            if (result.Reason == ResultReason.Canceled)
+            {
+                var cancellation = SpeechSynthesisCancellationDetails.FromResult(result);
+                MessageBox.Show($"CANCELED: Reason={cancellation.Reason}");
+            }
         }
 
-        private void button2_Click(object sender, EventArgs e)
+        private void wordDB()
         {
-            SpVoice dinle = new SpVoice();
-            dinle.Speak(button2.Text, SpeechVoiceSpeakFlags.SVSFDefault);
+
+            string connectionString = "Data Source=DESKTOP-1P312F6;Initial Catalog=word;Integrated Security=True";
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                using (SqlCommand command = new SqlCommand("SELECT * FROM wordTable", connection))
+                {
+                    using (SqlDataReader reader = command.ExecuteReader())
+                    {
+
+                        while (reader.Read())
+                        {
+                            wordList.Add(reader["words"].ToString());
+                        }
+
+                        // words dizisi SQL veritabanından çekilmiş kelimelerle doldurulmuş olacak
+                        connection.Close();
+                    }
+                }
+            }
         }
 
-        private void button3_Click(object sender, EventArgs e)
-        {
-            SpVoice dinle = new SpVoice();
-            dinle.Speak(button3.Text, SpeechVoiceSpeakFlags.SVSFDefault);
-        }
 
-        private void button4_Click(object sender, EventArgs e)
-        {
-            SpVoice dinle = new SpVoice();
-            dinle.Speak(button4.Text, SpeechVoiceSpeakFlags.SVSFDefault);
-        }
-
-        private void button5_Click(object sender, EventArgs e)
-        {
-            SpVoice dinle = new SpVoice();
-            dinle.Speak(button5.Text, SpeechVoiceSpeakFlags.SVSFDefault);
-        }
-
-        private void button6_Click(object sender, EventArgs e)
-        {
-            SpVoice dinle = new SpVoice();
-            dinle.Speak(button6.Text, SpeechVoiceSpeakFlags.SVSFDefault);
-        }
-
-        private void button7_Click(object sender, EventArgs e)
-        {
-            SpVoice dinle = new SpVoice();
-            dinle.Speak(button7.Text, SpeechVoiceSpeakFlags.SVSFDefault);
-        }
-
-        private void button8_Click(object sender, EventArgs e)
-        {
-            SpVoice dinle = new SpVoice();
-            dinle.Speak(button8.Text, SpeechVoiceSpeakFlags.SVSFDefault);
-        }
-
-        private void button9_Click(object sender, EventArgs e)
-        {
-            SpVoice dinle = new SpVoice();
-            dinle.Speak(button9.Text, SpeechVoiceSpeakFlags.SVSFDefault);
-        }
     }
+
+
 }

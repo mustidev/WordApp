@@ -7,22 +7,45 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Net;
+using Microsoft.CognitiveServices.Speech;
+using Microsoft.CognitiveServices.Speech.Audio;
+using System.Data.SqlClient;
 
 namespace WordApp
 {
     public partial class Form4 : Form
-    {
+    {       
+        private Random rand;
+        List<string> wordList = new List<string>();
         public Form4()
         {
             InitializeComponent();
-            web.ScriptErrorsSuppressed = true;
-            web.DocumentCompleted += new WebBrowserDocumentCompletedEventHandler(web_DocumentCompleted);
-            this.Controls.Add(web);
-            web.Navigate("https://www.bing.com/translator?to=tr&setlang=tr");
+            this.MaximizeBox = false;
+
+            string connectionString = "Data Source=DESKTOP-1P312F6;Initial Catalog=word;Integrated Security=True";
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                using (SqlCommand command = new SqlCommand("SELECT * FROM wordTable", connection))
+                {
+                    using (SqlDataReader reader = command.ExecuteReader())
+                    {
+
+                        while (reader.Read())
+                        {
+                            wordList.Add(reader["words"].ToString());
+                        }
+
+                        // words dizisi SQL veritabanından çekilmiş kelimelerle doldurulmuş olacak
+                        connection.Close();
+                    }
+                }
+            }
+
+            rand = new Random();
 
         }
-        WebBrowser web = new WebBrowser();
+
         private void button10_Click(object sender, EventArgs e)
         {
             Form1 geri = new Form1();
@@ -30,38 +53,71 @@ namespace WordApp
             this.Hide();
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private async void button1_Click(object sender, EventArgs e)
         {
-            web.Document.GetElementById("tta_playconsrc").InvokeMember("Click");
-        }
-        private void web_DocumentCompleted(object sender, WebBrowserDocumentCompletedEventArgs e)
-        {
-            try
-            {
-                web.Document.GetElementById("tta_input_ta").InnerText = label2.Text;
-                web.Document.GetElementById("tta_src_copy").InvokeMember("click");
-                web.Document.GetElementById("tta_play_img").InvokeMember("click");
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message);
-            }
-        }
-
-        private void Form4_Load(object sender, EventArgs e)
-
-        {
-            try
-            {
-                web.Navigate("https://www.bing.com/translator?to=tr&setlang=tr");
-                web.ScriptErrorsSuppressed = true;
-                web.Document.GetElementById("tta_input_ta").InnerText = label2.Text;    
-            }
-            catch(Exception ex)
-            {
-                MessageBox.Show(ex.Message);
-            }        
             
+
+            // Azure Speech Services kullanmak için gerekli olan kimlik bilgileri
+            var subscriptionKey = "37acc756bb794815b919566626818017";   
+            var region = "eastus";
+
+            var config = SpeechConfig.FromSubscription(subscriptionKey, region);
+
+            config.SpeechRecognitionLanguage = "tr-TR";
+            
+            using (var recognizer = new SpeechRecognizer(config))
+            {
+
+                var result = await recognizer.RecognizeOnceAsync();
+
+                if (result.Reason == ResultReason.RecognizedSpeech)
+                {
+                   
+                    MessageBox.Show(label2.Text.ToLower().ToString());
+                    MessageBox.Show(result.Text.ToLower().Substring(0, result.Text.Length - 1));
+                    
+                    if (result.Text.ToLower().Substring(0, result.Text.Length-1)==(label2.Text.ToLower()))
+                    {
+                        MessageBox.Show("Doğru!");
+                        SetRandomWords();
+                    }
+                    else
+                    {
+                        MessageBox.Show("Yanlış! Tekrar Deneyiniz.. ");
+
+                    }
+                }
+
+                else if (result.Reason == ResultReason.NoMatch)
+                {
+                    MessageBox.Show("Üzgünüz, konuşma tanınmadı.");
+                }
+
+                else if (result.Reason == ResultReason.Canceled)
+                {
+                    var cancellation = CancellationDetails.FromResult(result);
+                    MessageBox.Show($"Cancelled due to {cancellation.Reason}");
+                }
+            }
+
+        }
+
+        private void SetRandomWords()
+        {
+            var shuffledWords = wordList.OrderBy(x => rand.Next()).ToArray();
+            for (int i = 0; i < wordList.Count; i++)
+            {
+                label2.Text = shuffledWords[i];
+            }
+
+        }
+        private void Form4_Load(object sender, EventArgs e)
+                
+        {
+
+            SetRandomWords();
+
+
         }
 
 

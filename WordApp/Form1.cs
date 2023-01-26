@@ -15,6 +15,8 @@ namespace WordApp
         public Form1()
         {
             InitializeComponent();
+            this.MaximizeBox = false;
+            
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -42,6 +44,22 @@ namespace WordApp
         private void button3_Click(object sender, EventArgs e)
         {
             Application.Exit();
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            
+
+        }
+
+        private void pictureBox1_Click(object sender, EventArgs e)
+        {
+            System.Diagnostics.Process.Start("https://github.com/mustidev");
+        }
+
+        private void pictureBox2_Click(object sender, EventArgs e)
+        {
+            System.Diagnostics.Process.Start("https://www.linkedin.com/in/mustafa8demir/");
         }
     }
    
